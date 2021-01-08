@@ -3,7 +3,7 @@ use std::io::{self, BufRead as _};
 type BoxError = Box<dyn std::error::Error>;
 
 fn main() -> Result<(), BoxError> {
-    let max = io::stdin()
+    let mut seats: Vec<_> = io::stdin()
         .lock()
         .lines()
         .map(|line| {
@@ -20,9 +20,19 @@ fn main() -> Result<(), BoxError> {
             });
             row * 8 + col
         })
-        .max()
-        .expect("at least one seat");
+        .collect();
+    seats.sort_unstable();
+    let min = seats[0];
+    let max = seats[seats.len() - 1];
+    let (_, after_mine) = seats
+        .into_iter()
+        .enumerate()
+        .find(|(i, seat)| i + min < *seat)
+        .expect("my seat");
+    let my = after_mine - 1;
 
-    println!("{}", max);
+    println!("min: {}", min);
+    println!("max: {}", max);
+    println!("my: {}", my);
     Ok(())
 }

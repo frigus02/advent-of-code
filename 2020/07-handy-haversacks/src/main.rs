@@ -50,12 +50,24 @@ impl<T> Graph<T> {
         Ok(())
     }
 
-    fn find_ancestors(&self, vertex: &str) -> Vec<&str> {
+    fn find_direct_ancestors(&self, vertex: &str) -> Vec<&str> {
         if let Some(vertex_i) = self.vertices.iter().position(|x| x == vertex) {
             self.edges
                 .iter()
                 .filter(|edge| edge.to == vertex_i)
                 .map(|edge| self.vertices[edge.from].as_str())
+                .collect()
+        } else {
+            Vec::new()
+        }
+    }
+
+    fn find_direct_children(&self, vertex: &str) -> Vec<(&str, &T)> {
+        if let Some(vertex_i) = self.vertices.iter().position(|x| x == vertex) {
+            self.edges
+                .iter()
+                .filter(|edge| edge.from == vertex_i)
+                .map(|edge| (self.vertices[edge.to].as_str(), &edge.data))
                 .collect()
         } else {
             Vec::new()
@@ -120,13 +132,31 @@ fn main() -> Result<(), BoxError> {
 
     let mut ancestors = HashSet::new();
     let mut queue = Vec::new();
-    queue.extend(graph.find_ancestors("shiny gold"));
+    queue.extend(graph.find_direct_ancestors("shiny gold"));
     while let Some(bag) = queue.pop() {
         if ancestors.insert(bag) {
-            queue.extend(graph.find_ancestors(bag));
+            queue.extend(graph.find_direct_ancestors(bag));
         }
     }
 
-    println!("{:?}", ancestors.len());
+    println!(
+        "Bags eventually containing shiny gold: {:?}",
+        ancestors.len()
+    );
+
+    let mut bags = 0;
+    let mut queue = Vec::new();
+    queue.push((1, "shiny gold"));
+    while let Some((count, bag)) = queue.pop() {
+        bags += count;
+        queue.extend(
+            graph
+                .find_direct_children(bag)
+                .into_iter()
+                .map(|(contains_bag, data)| (data.contain_count * count, contains_bag)),
+        );
+    }
+
+    println!("Bags required inside 1 shiny gold bag: {:?}", bags - 1);
     Ok(())
 }

@@ -19,8 +19,11 @@ fn main() -> Result<(), BoxError> {
             .next()
             .ok_or("invalid line")?;
         let password = caps.get(4).ok_or("invalid line")?.as_str();
-        let count = password.chars().filter(|c| c == &ch).count();
-        if min <= count && count <= max {
+        let count = password
+            .char_indices()
+            .filter(|(i, c)| c == &ch && (i + 1 == min || i + 1 == max))
+            .count();
+        if count == 1 {
             valid += 1;
         }
     }
